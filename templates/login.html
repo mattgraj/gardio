@@ -1,69 +1,61 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+{% extends 'base.html' %}
+
+{% block title %}Login - My Website{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h2>Login to Your Account</h2>
+        <form action="/login" method="POST">
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" name="email" id="email" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" name="password" id="password" class="form-control" required>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Login</button>
+        </form>
+    </div>
+{% endblock %}
+
+{% block style %}
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f7f7f7;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-top: 50px;
         }
-        .form-container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
-            width: 300px;
-        }
-        .form-container h2 {
+        h2 {
             text-align: center;
+        }
+        .form-group {
             margin-bottom: 20px;
         }
-        .form-container input {
+        .form-control {
             width: 100%;
             padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-            border: 1px solid #ddd;
+            font-size: 14px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
         }
-        .form-container button {
+        .btn {
             width: 100%;
             padding: 10px;
+            font-size: 16px;
+            border-radius: 4px;
             background-color: #007BFF;
             color: white;
             border: none;
-            border-radius: 5px;
-            cursor: pointer;
         }
-        .form-container button:hover {
+        .btn:hover {
             background-color: #0056b3;
         }
-        .message {
-            color: red;
-            text-align: center;
-            font-size: 14px;
-            margin-top: 15px;
-        }
     </style>
-</head>
-<body>
-
-    <div class="form-container">
-        <h2>Login</h2>
-        <form action="/login" method="POST">
-            <input type="email" name="email" placeholder="Enter your email" required><br>
-            <input type="password" name="password" placeholder="Enter your password" required><br>
-            <button type="submit">Login</button>
-        </form>
-        <p class="message">{{ message }}</p>
-    </div>
-
-</body>
-</html>
+{% endblock %}
