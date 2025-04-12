@@ -4,24 +4,42 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import os
 import random
 import string
+import sqlite3
 
 app = Flask(__name__)
 
 # Configuring Flask-Mail
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'  # Gmail SMTP server
-app.config['MAIL_PORT'] = 465  # Gmail SMTP port
-app.config['MAIL_USERNAME'] = 'yinkaj045@gmail.com'  # Your email address
-app.config['MAIL_PASSWORD'] = 'uxkc ypmp jhoa kqcz'  # Your app password
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USERNAME'] = 'yinkaj045@gmail.com'
+app.config['MAIL_PASSWORD'] = 'uxkc ypmp jhoa kqcz'
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
-app.config['MAIL_DEFAULT_SENDER'] = 'yinkaj045@gmail.com'  # Default sender
+app.config['MAIL_DEFAULT_SENDER'] = 'yinkaj045@gmail.com'
 app.secret_key = 'your_secret_key'  # Secret key for flashing messages
 
 mail = Mail(app)
 
-# In-memory storage for users and tokens (you can replace this with a database in production)
-users = {}
-verification_tokens = {}
+# Database setup
+def get_db():
+    conn = sqlite3.connect('users.db')
+    conn.row_factory = sqlite3.Row
+    return conn
+
+# Create user table if it doesn't exist
+def create_table():
+    with get_db() as db:
+        db.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            verified BOOLEAN NOT NULL DEFAULT 0,
+            token TEXT
+        )
+        """)
+
+create_table()
 
 # Generate a random verification token
 def generate_verification_token(length=6):
@@ -53,19 +71,25 @@ def signup():
         password = request.form['password']
         
         # Check if the user already exists
-        if email in users:
-            message = "This email is already registered."
-            return render_template('signup.html', message=message)
+        with get_db() as db:
+            user = db.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+            if user:
+                message = "This email is already registered."
+                return render_template('signup.html', message=message)
 
         # Hash the password
         hashed_password = generate_password_hash(password)
         
-        # Store user data (email and hashed password)
-        users[email] = {'password': hashed_password}
-
+        # Store user data (email and hashed password) in the database
+        with get_db() as db:
+            db.execute("INSERT INTO users (email, password) VALUES (?, ?)", (email, hashed_password))
+        
         # Generate token
         token = generate_verification_token()
-        verification_tokens[email] = token
+        
+        # Store token in the database
+        with get_db() as db:
+            db.execute("UPDATE users SET token = ? WHERE email = ?", (token, email))
         
         # Send verification email
         send_verification_email(email, token)
@@ -85,18 +109,22 @@ def login():
         password = request.form['password']
         
         # Check if the email exists in users
-        if email not in users:
-            message = "Email not registered."
-            return render_template('login.html', message=message)
-        
-        # Check if the password is correct
-        if not check_password_hash(users[email]['password'], password):
-            message = "Invalid password."
-            return render_template('login.html', message=message)
+        with get_db() as db:
+            user = db.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+            if not user:
+                message = "Email not registered."
+                return render_template('login.html', message=message)
+
+            # Check if the password is correct
+            if not check_password_hash(user['password'], password):
+                message = "Invalid password."
+                return render_template('login.html', message=message)
         
         # Generate and send verification code
         token = generate_verification_token()
-        verification_tokens[email] = token
+        with get_db() as db:
+            db.execute("UPDATE users SET token = ? WHERE email = ?", (token, email))
+        
         send_verification_email(email, token)
 
         # Ask the user to enter the verification token
@@ -110,11 +138,13 @@ def login():
 def verify(token):
     email = request.args.get('email')
     
-    if verification_tokens.get(email) == token:
-        # If the token is valid, login is successful
-        return f"Your email ({email}) has been successfully verified!"
-    else:
-        return "Invalid verification token."
+    with get_db() as db:
+        user = db.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+        if user and user['token'] == token:
+            db.execute("UPDATE users SET verified = 1 WHERE email = ?", (email,))
+            return f"Your email ({email}) has been successfully verified!"
+    
+    return "Invalid verification token."
 
 # Verify token form route (for the user to enter the code)
 @app.route('/verify_token', methods=['POST'])
@@ -122,10 +152,13 @@ def verify_token():
     email = request.form['email']
     token = request.form['token']
     
-    if verification_tokens.get(email) == token:
-        return f"Your email ({email}) has been successfully verified!"
-    else:
-        return "Invalid verification token."
+    with get_db() as db:
+        user = db.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+        if user and user['token'] == token:
+            db.execute("UPDATE users SET verified = 1 WHERE email = ?", (email,))
+            return f"Your email ({email}) has been successfully verified!"
+    
+    return "Invalid verification token."
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)), debug=True)
