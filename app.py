@@ -6,9 +6,6 @@ import string
 
 app = Flask(__name__)
 
-# Set your secret key for session and CSRF protection
-app.config['SECRET_KEY'] = 'gAAAAABn-hC3Wv1ZuylTbtEvVt1myYG4gTuzYldWxcEzpkCJSCeYewnIw9ijBswaG8BwTk5QHivMjcESgfR2hW-Nht92rMDGv77r0nFs_uvuGcDGFz29fT9PohX4gpFFQXKwGme5QGB82mO_YP-_aqj3oifVQASe8hGHUyIazhcqsNStKZBWxM4a9TA-u9_36VhtzJenK017lzKJ3kOa7LxyMxWfDu5_v9ujQ6KupYoyze1vIQWpTyjRy4k64f2BquWyOR5EY4Do_HIQm4HTicGFr2oFK8TJ0PGoTFNEJcTF1uwF8CE2UUb1-6n3uKwJNwr45dwPDp9nth6xOGvfrHnUbRyuqCmwrvG41F5QCgtWdMI9-nf5bxDBWSK3N_6tRE9c2aKtHpnRfvYN8iiNYCYuJB_GyboXHw=='  # Use your secret key here
-
 # Configuring Flask-Mail
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'  # Gmail SMTP server
 app.config['MAIL_PORT'] = 465  # Gmail SMTP port
@@ -17,6 +14,9 @@ app.config['MAIL_PASSWORD'] = 'uxkc ypmp jhoa kqcz'  # Your app password
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_DEFAULT_SENDER'] = 'yinkaj045@gmail.com'  # Default sender
+
+# Secret key for sessions and security
+app.config['SECRET_KEY'] = 'gAAAAABn-hI7Mt04QoUIz0k0mu5lzEJcuWUTYDcU5DbFkxXJotcl5AlGljQ7pIhHY0J8YupUa6vXnlY4GEeOYRXNH2EnTo8S-CkVg9DIBvyPhxAQ_dqwp0Dcuwd9P2dumzafy5zL-oW-wYgsUv0icUHMuwhcwTCuqIv04zkZA2KASzlCxTrz4ILNU0pCf-gkabC_NU1gQpM10hnaSxKVD4c5WFkQSIdeER-d2MtCWzuAzElujn7kjc0P43tFGaF9aLzAore1iov-M8Pi1IIujtwFpFGs8eL59yqZKgHiNQ6hQxhsEZ79WNlory9PX7mgW_RgVbZp9q2e2ZOmyJTWo-AF59o76Ww3VzEWNTwH4Gglanad_mEi159VlSbzaSzjH5u84EBa9cuJR_xh78Q-2odWuQDqubX2lQ=='
 
 mail = Mail(app)
 
@@ -48,13 +48,18 @@ def signup():
         username = request.form['username']
         email = request.form['email']
         password = request.form['password']
+        
+        if not username or not email or not password:
+            flash("All fields are required!", "danger")
+            return redirect(url_for('signup'))
+        
         # Generate token
         token = generate_verification_token()
         # Send email
         send_verification_email(email, token)
-        # Store the token in a real app (e.g., database) to verify later
-        flash("A verification email has been sent. Please check your inbox.")
-        return redirect(url_for('home'))
+        
+        flash("A verification email has been sent. Please check your inbox.", "success")
+        return redirect(url_for('login'))  # Redirect to the login page after sign up
     return render_template('signup.html')
 
 # Login route
@@ -63,11 +68,18 @@ def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
+        
+        if not email or not password:
+            flash("Please enter both email and password!", "danger")
+            return redirect(url_for('login'))
+        
         # Here, you would check the user credentials in a real app
+        # For now, we assume the login attempt is valid
         token = generate_verification_token()
         send_verification_email(email, token)
-        flash("A verification email has been sent. Please check your inbox.")
-        return redirect(url_for('home'))
+        
+        flash("A verification email has been sent. Please check your inbox.", "success")
+        return redirect(url_for('home'))  # Redirect to home page after login
     return render_template('login.html')
 
 # Verification route
@@ -78,5 +90,4 @@ def verify(token):
     return "Your email has been successfully verified!"
 
 if __name__ == "__main__":
-    port = os.getenv("PORT", 5000)  # Use the PORT environment variable, default to 5000 if not set
-    app.run(debug=True, host='0.0.0.0', port=port)
+    app.run(debug=True)
