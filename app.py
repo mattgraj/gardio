@@ -6,6 +6,9 @@ import string
 
 app = Flask(__name__)
 
+# Set your secret key for session and CSRF protection
+app.config['SECRET_KEY'] = 'gAAAAABn-hC3Wv1ZuylTbtEvVt1myYG4gTuzYldWxcEzpkCJSCeYewnIw9ijBswaG8BwTk5QHivMjcESgfR2hW-Nht92rMDGv77r0nFs_uvuGcDGFz29fT9PohX4gpFFQXKwGme5QGB82mO_YP-_aqj3oifVQASe8hGHUyIazhcqsNStKZBWxM4a9TA-u9_36VhtzJenK017lzKJ3kOa7LxyMxWfDu5_v9ujQ6KupYoyze1vIQWpTyjRy4k64f2BquWyOR5EY4Do_HIQm4HTicGFr2oFK8TJ0PGoTFNEJcTF1uwF8CE2UUb1-6n3uKwJNwr45dwPDp9nth6xOGvfrHnUbRyuqCmwrvG41F5QCgtWdMI9-nf5bxDBWSK3N_6tRE9c2aKtHpnRfvYN8iiNYCYuJB_GyboXHw=='  # Use your secret key here
+
 # Configuring Flask-Mail
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'  # Gmail SMTP server
 app.config['MAIL_PORT'] = 465  # Gmail SMTP port
