@@ -60,4 +60,5 @@ def verify(token):
     return "Your email has been successfully verified!"
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Ensure Flask listens on the correct port for Render
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)), debug=True)
