@@ -36,7 +36,7 @@ def send_verification_email(user_email, token):
 # Home route
 @app.route('/')
 def home():
-    return render_template('home.html')
+    return render_template('index.html')
 
 # Signup route
 @app.route('/signup', methods=['GET', 'POST'])
@@ -45,15 +45,13 @@ def signup():
         username = request.form['username']
         email = request.form['email']
         password = request.form['password']
-        
         # Generate token
         token = generate_verification_token()
         # Send email
         send_verification_email(email, token)
+        # Store the token in a real app (e.g., database) to verify later
         flash("A verification email has been sent. Please check your inbox.")
-        # Store user info and token in your database (for now we skip this step)
         return redirect(url_for('home'))
-    
     return render_template('signup.html')
 
 # Login route
@@ -62,12 +60,11 @@ def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
-        # Validate credentials and send verification email
+        # Here, you would check the user credentials in a real app
         token = generate_verification_token()
         send_verification_email(email, token)
         flash("A verification email has been sent. Please check your inbox.")
-        return redirect(url_for('home'))  # Redirect to home page after successful login
-
+        return redirect(url_for('home'))
     return render_template('login.html')
 
 # Verification route
@@ -78,4 +75,5 @@ def verify(token):
     return "Your email has been successfully verified!"
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = os.getenv("PORT", 5000)  # Use the PORT environment variable, default to 5000 if not set
+    app.run(debug=True, host='0.0.0.0', port=port)
