@@ -17,6 +17,9 @@ app.config['MAIL_DEFAULT_SENDER'] = 'yinkaj045@gmail.com'  # Default sender
 
 mail = Mail(app)
 
+# Store tokens in-memory (you can use a database in production)
+tokens = {}
+
 # Generate a random verification token
 def generate_verification_token(length=6):
     characters = string.ascii_letters + string.digits
@@ -41,16 +44,33 @@ def home():
 # Signup route
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
+    message = ""
     if request.method == 'POST':
         email = request.form['email']
         # Generate token
         token = generate_verification_token()
         # Send email
         send_verification_email(email, token)
-        # Store the token in a real app (e.g., database) to verify later
-        flash("A verification email has been sent. Please check your inbox.")
+        # Store the token in memory
+        tokens[email] = token
+        message = "A verification email has been sent. Please check your inbox."
+        flash(message)
         return redirect(url_for('home'))
-    return render_template('signup.html')
+    return render_template('signup.html', message=message)
+
+# Login route
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    message = ""
+    if request.method == 'POST':
+        email = request.form['email']
+        token = request.form['token']
+        # Check if the email and token match
+        if tokens.get(email) == token:
+            message = "Login successful!"
+        else:
+            message = "Invalid token or email."
+    return render_template('login.html', message=message)
 
 # Verification route
 @app.route('/verify/<token>')
@@ -60,5 +80,4 @@ def verify(token):
     return "Your email has been successfully verified!"
 
 if __name__ == "__main__":
-    # Ensure Flask listens on the correct port for Render
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)), debug=True)
